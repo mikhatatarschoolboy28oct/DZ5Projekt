@@ -1,67 +1,103 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
+class Student
+{
+    public string Surname, Name, Exam;
+    public int Year, Score;
+
+    public override string ToString()
+    {
+        return $"{Surname} {Name}, {Year}, {Exam}, {Score}";
+    }
+}
+
 class Program
 {
-    static readonly Random Rnd = new Random();
+    static List<Student> students = new List<Student>();
+    static string file = "students.txt";
 
     static void Main()
     {
-        
-        string dir = Path.Combine(Directory.GetCurrentDirectory(), "images");
-        string[] images = Enumerable.Range(1, 32)
-            .Select(i => Path.Combine(dir, $"{i}.png"))
-            .ToArray();
-
-        
-        foreach (var img in images)
-            if (!File.Exists(img))
-                throw new FileNotFoundException($"Не найден файл: {img}");
-
-        
-        var original = new List<string>();
-        foreach (var img in images)
+        if (File.Exists(file))
         {
-            original.Add(img);
-            original.Add(img);
+            foreach (string line in File.ReadAllLines(file))
+            {
+                string[] d = line.Split(';');
+                students.Add(new Student
+                {
+                    Surname = d[0],
+                    Name = d[1],
+                    Year = int.Parse(d[2]),
+                    Exam = d[3],
+                    Score = int.Parse(d[4])
+                });
+            }
+        }
+        else
+        {
+            for (int i = 0; i < 10; i++)
+                students.Add(new Student
+                {
+                    Surname = "Студент" + i,
+                    Name = "Имя" + i,
+                    Year = 2007,
+                    Exam = "Математика",
+                    Score = 60 + i
+                });
         }
 
-        var shuffled = new List<string>(original);
-        Shuffle(shuffled);
-
-        
-        Console.WriteLine("ИЗНАЧАЛЬНЫЙ LIST");
-        PrintList(original);
-
-        Console.WriteLine("\nПОЛУЧЕННЫЙ LIST");
-        PrintList(shuffled);
-
-        
-        Console.WriteLine($"\nРазмер списка: {shuffled.Count}");
-        Console.WriteLine($"Каждая картинка ровно 2 раза: " +
-            $"{shuffled.GroupBy(x => x).All(g => g.Count() == 2)}");
-    }
-
-    
-    static void Shuffle<T>(List<T> list)
-    {
-        for (int i = list.Count - 1; i > 0; i--)
+        while (true)
         {
-            int j = Rnd.Next(i + 1);
-            (list[i], list[j]) = (list[j], list[i]);
-        }
-    }
+            Console.WriteLine("\nНовый студент / Удалить / Сортировать / Показать / Выход");
+            string cmd = Console.ReadLine().ToLower();
 
-    
-    static void PrintList(List<string> list)
-    {
-        for (int i = 0; i < list.Count; i += 8)
-        {
-            var chunk = Enumerable.Range(i, Math.Min(8, list.Count - i))
-                .Select(j => $"{j,2}:{Path.GetFileNameWithoutExtension(list[j]),2}");
-            Console.WriteLine(string.Join("  ", chunk));
+            if (cmd == "новый студент")
+            {
+                Student s = new Student();
+
+                Console.Write("Фамилия: ");
+                s.Surname = Console.ReadLine();
+                Console.Write("Имя: ");
+                s.Name = Console.ReadLine();
+                Console.Write("Год рождения: ");
+                s.Year = int.Parse(Console.ReadLine());
+                Console.Write("Экзамен: ");
+                s.Exam = Console.ReadLine();
+                Console.Write("Баллы: ");
+                s.Score = int.Parse(Console.ReadLine());
+
+                students.Add(s);
+            }
+            else if (cmd == "удалить")
+            {
+                Console.Write("Фамилия: ");
+                string surname = Console.ReadLine();
+                Console.Write("Имя: ");
+                string name = Console.ReadLine();
+
+                Student s = students.FirstOrDefault(x => x.Surname == surname && x.Name == name);
+
+                if (s != null) students.Remove(s);
+                else Console.WriteLine("Не найден");
+            }
+            else if (cmd == "сортировать")
+                students = students.OrderBy(x => x.Score).ToList();
+
+            else if (cmd == "показать")
+                foreach (Student s in students)
+                    Console.WriteLine(s);
+
+            else if (cmd == "выход")
+                break;
+            else
+                Console.WriteLine("Неизвестная команда");
+
+            File.WriteAllLines(file, students.Select(s =>
+                $"{s.Surname};{s.Name};{s.Year};{s.Exam};{s.Score}"));
         }
     }
 }
