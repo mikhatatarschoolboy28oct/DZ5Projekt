@@ -1,103 +1,104 @@
 ﻿
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
-class Student
+class Grandma
 {
-    public string Surname, Name, Exam;
-    public int Year, Score;
+    public string Name;
+    public int Age;
+    public List<string> Diseases = new List<string>();
+}
 
-    public override string ToString()
-    {
-        return $"{Surname} {Name}, {Year}, {Exam}, {Score}";
-    }
+class Hospital
+{
+    public string Name;
+    public List<string> Diseases = new List<string>();
+    public int Capacity;
+    public Stack<Grandma> Patients = new Stack<Grandma>();
 }
 
 class Program
 {
-    static List<Student> students = new List<Student>();
-    static string file = "students.txt";
-
     static void Main()
     {
-        if (File.Exists(file))
+        Stack<Hospital> hospitals = new Stack<Hospital>();
+        Queue<Grandma> grandmas = new Queue<Grandma>();
+
+        Hospital h1 = new Hospital
         {
-            foreach (string line in File.ReadAllLines(file))
+            Name = "Больница №1",
+            Capacity = 2,
+            Diseases = new List<string> { "кашель", "насморк" }
+        };
+
+        Hospital h2 = new Hospital
+        {
+            Name = "Больница №2",
+            Capacity = 3,
+            Diseases = new List<string> { "голова", "кашель" }
+        };
+
+        hospitals.Push(h1);
+        hospitals.Push(h2);
+
+        Console.Write("Количество бабуль: ");
+        int n = int.Parse(Console.ReadLine());
+
+        for (int i = 0; i < n; i++)
+        {
+            Grandma g = new Grandma();
+
+            Console.Write("Имя: ");
+            g.Name = Console.ReadLine();
+
+            Console.Write("Возраст: ");
+            g.Age = int.Parse(Console.ReadLine());
+
+            Console.Write("Количество болезней: ");
+            int count = int.Parse(Console.ReadLine());
+
+            for (int j = 0; j < count; j++)
             {
-                string[] d = line.Split(';');
-                students.Add(new Student
-                {
-                    Surname = d[0],
-                    Name = d[1],
-                    Year = int.Parse(d[2]),
-                    Exam = d[3],
-                    Score = int.Parse(d[4])
-                });
+                Console.Write("Болезнь: ");
+                g.Diseases.Add(Console.ReadLine().ToLower());
             }
+
+            grandmas.Enqueue(g);
         }
-        else
+
+        while (grandmas.Count > 0)
         {
-            for (int i = 0; i < 10; i++)
-                students.Add(new Student
+            Grandma g = grandmas.Dequeue();
+            bool found = false;
+
+            foreach (Hospital h in hospitals)
+            {
+                int treated = g.Diseases.Count(d =>
+                    h.Diseases.Contains(d));
+
+                if (h.Patients.Count < h.Capacity &&
+                    (g.Diseases.Count == 0 ||
+                    treated * 2 > g.Diseases.Count))
                 {
-                    Surname = "Студент" + i,
-                    Name = "Имя" + i,
-                    Year = 2007,
-                    Exam = "Математика",
-                    Score = 60 + i
-                });
+                    h.Patients.Push(g);
+                    Console.WriteLine(g.Name + " попала в " + h.Name);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+                Console.WriteLine(g.Name + " осталась на улице");
         }
 
-        while (true)
+        foreach (Hospital h in hospitals)
         {
-            Console.WriteLine("\nНовый студент / Удалить / Сортировать / Показать / Выход");
-            string cmd = Console.ReadLine().ToLower();
-
-            if (cmd == "новый студент")
-            {
-                Student s = new Student();
-
-                Console.Write("Фамилия: ");
-                s.Surname = Console.ReadLine();
-                Console.Write("Имя: ");
-                s.Name = Console.ReadLine();
-                Console.Write("Год рождения: ");
-                s.Year = int.Parse(Console.ReadLine());
-                Console.Write("Экзамен: ");
-                s.Exam = Console.ReadLine();
-                Console.Write("Баллы: ");
-                s.Score = int.Parse(Console.ReadLine());
-
-                students.Add(s);
-            }
-            else if (cmd == "удалить")
-            {
-                Console.Write("Фамилия: ");
-                string surname = Console.ReadLine();
-                Console.Write("Имя: ");
-                string name = Console.ReadLine();
-
-                Student s = students.FirstOrDefault(x => x.Surname == surname && x.Name == name);
-
-                if (s != null) students.Remove(s);
-                else Console.WriteLine("Не найден");
-            }
-            else if (cmd == "сортировать")
-                students = students.OrderBy(x => x.Score).ToList();
-
-            else if (cmd == "показать")
-                foreach (Student s in students)
-                    Console.WriteLine(s);
-
-            else if (cmd == "выход")
-                break;
-            else
-                Console.WriteLine("Неизвестная команда");
-
-            File.WriteAllLines(file, students.Select(s =>
-                $"{s.Surname};{s.Name};{s.Year};{s.Exam};{s.Score}"));
+            Console.WriteLine("\n" + h.Name);
+            Console.WriteLine("Пациентов: " + h.Patients.Count);
+            Console.WriteLine("Болезни: " + string.Join(", ", h.Diseases));
+            Console.WriteLine("Заполненность: " +
+                (h.Capacity > 0 ? h.Patients.Count * 100.0 / h.Capacity : 0) + "%");
         }
     }
 }
