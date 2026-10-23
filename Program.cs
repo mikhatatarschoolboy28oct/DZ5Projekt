@@ -1,104 +1,66 @@
 ﻿
 using System;
 using System.Collections.Generic;
-using System.Linq;
-
-class Grandma
-{
-    public string Name;
-    public int Age;
-    public List<string> Diseases = new List<string>();
-}
-
-class Hospital
-{
-    public string Name;
-    public List<string> Diseases = new List<string>();
-    public int Capacity;
-    public Stack<Grandma> Patients = new Stack<Grandma>();
-}
 
 class Program
 {
     static void Main()
     {
-        Stack<Hospital> hospitals = new Stack<Hospital>();
-        Queue<Grandma> grandmas = new Queue<Grandma>();
-
-        Hospital h1 = new Hospital
+        int[,] graph =
         {
-            Name = "Больница №1",
-            Capacity = 2,
-            Diseases = new List<string> { "кашель", "насморк" }
+            { 0, 1, 1, 0, 0 },
+            { 1, 0, 0, 1, 0 },
+            { 1, 0, 0, 1, 1 },
+            { 0, 1, 1, 0, 1 },
+            { 0, 0, 1, 1, 0 }
         };
 
-        Hospital h2 = new Hospital
+        Console.Write("Начальная вершина (0-4): ");
+        int start = int.Parse(Console.ReadLine());
+
+        Console.Write("Конечная вершина (0-4): ");
+        int end = int.Parse(Console.ReadLine());
+
+        Queue<int> queue = new Queue<int>();
+        int[] parent = new int[5];
+        bool[] visited = new bool[5];
+
+        Array.Fill(parent, -1);
+        queue.Enqueue(start);
+        visited[start] = true;
+
+        while (queue.Count > 0)
         {
-            Name = "Больница №2",
-            Capacity = 3,
-            Diseases = new List<string> { "голова", "кашель" }
-        };
+            int v = queue.Dequeue();
 
-        hospitals.Push(h1);
-        hospitals.Push(h2);
+            if (v == end)
+                break;
 
-        Console.Write("Количество бабуль: ");
-        int n = int.Parse(Console.ReadLine());
-
-        for (int i = 0; i < n; i++)
-        {
-            Grandma g = new Grandma();
-
-            Console.Write("Имя: ");
-            g.Name = Console.ReadLine();
-
-            Console.Write("Возраст: ");
-            g.Age = int.Parse(Console.ReadLine());
-
-            Console.Write("Количество болезней: ");
-            int count = int.Parse(Console.ReadLine());
-
-            for (int j = 0; j < count; j++)
+            for (int i = 0; i < 5; i++)
             {
-                Console.Write("Болезнь: ");
-                g.Diseases.Add(Console.ReadLine().ToLower());
-            }
-
-            grandmas.Enqueue(g);
-        }
-
-        while (grandmas.Count > 0)
-        {
-            Grandma g = grandmas.Dequeue();
-            bool found = false;
-
-            foreach (Hospital h in hospitals)
-            {
-                int treated = g.Diseases.Count(d =>
-                    h.Diseases.Contains(d));
-
-                if (h.Patients.Count < h.Capacity &&
-                    (g.Diseases.Count == 0 ||
-                    treated * 2 > g.Diseases.Count))
+                if (graph[v, i] == 1 && !visited[i])
                 {
-                    h.Patients.Push(g);
-                    Console.WriteLine(g.Name + " попала в " + h.Name);
-                    found = true;
-                    break;
+                    visited[i] = true;
+                    parent[i] = v;
+                    queue.Enqueue(i);
                 }
             }
-
-            if (!found)
-                Console.WriteLine(g.Name + " осталась на улице");
         }
 
-        foreach (Hospital h in hospitals)
+        if (!visited[end])
         {
-            Console.WriteLine("\n" + h.Name);
-            Console.WriteLine("Пациентов: " + h.Patients.Count);
-            Console.WriteLine("Болезни: " + string.Join(", ", h.Diseases));
-            Console.WriteLine("Заполненность: " +
-                (h.Capacity > 0 ? h.Patients.Count * 100.0 / h.Capacity : 0) + "%");
+            Console.WriteLine("Путь не найден");
+            return;
         }
+
+        List<int> path = new List<int>();
+
+        for (int v = end; v != -1; v = parent[v])
+            path.Add(v);
+
+        path.Reverse();
+
+        Console.WriteLine("Кратчайший путь: " +
+            string.Join(" -> ", path));
     }
 }
